@@ -5,7 +5,7 @@ __author__ = 'paxet'
 db = None
 
 
-def init_db(db_name='tyrachinas.db'):
+def init_db(db_name='tyrachinas.sqlite'):
     return SqliteDatabase(db_name)
 
 

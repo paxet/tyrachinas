@@ -6,12 +6,12 @@ __author__ = 'paxet'
 
 
 class Resource(BaseModel):
-    filename = CharField(null=False, max_length=255)
-    description = TextField(null=False)
-    email_owner = CharField(null=False, max_length=255)
-    email_receiver = CharField(null=False, max_length=255)
+    filename = CharField(max_length=255)
+    description = TextField()
+    email_owner = CharField(max_length=255)
+    email_receiver = CharField(max_length=255)
     path = CharField(null=True)
-    uploaded_date = DateTimeField(datetime.datetime.now, null=True)
+    uploaded_date = DateTimeField(default=datetime.datetime.now)
     mimetype = CharField(null=True, max_length=255)
     encrypted = BooleanField(default=False)
 

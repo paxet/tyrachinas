@@ -1,4 +1,4 @@
-import os
+import os, uuid
 from flask import Blueprint, render_template, redirect, url_for, flash, Markup, current_app
 from werkzeug.utils import secure_filename
 from webapp.forms import FormResource
@@ -22,19 +22,17 @@ def resources():
     form = FormResource()
     if form.validate_on_submit():
         if form.attachment.has_file():
-            filename = secure_filename(form.attachment.data.filename)
-            print(filename)
+            remote_filename = secure_filename(form.attachment.data.filename)
+            local_filename = str(uuid.uuid4())
             folder = current_app.config['UPLOAD_FOLDER']
             if not os.path.exists(folder):
                 os.makedirs(folder)
-            file_path = folder + '/' + filename
-            print(file_path)
+            file_path = folder + '/' + local_filename
             form.attachment.data.save(file_path)
-            mimetype = form.attachment.data.mimetype
-            Resource.create(filename=filename,
+            Resource.create(filename=remote_filename,
                             description=form.description.data,
                             path=file_path,
-                            mimetype=mimetype,
+                            mimetype=form.attachment.data.mimetype,
                             email_owner=form.email_owner.data,
                             email_receiver=form.email_receiver.data)
             # TODO Send email to inform
