@@ -11,7 +11,7 @@ class Resource(BaseModel):
     email_owner = CharField(null=False, max_length=255)
     email_receiver = CharField(null=False, max_length=255)
     path = CharField(null=True)
-    uploaded_date = DateTimeField(datetime.datetime.now)
+    uploaded_date = DateTimeField(datetime.datetime.now, null=True)
     mimetype = CharField(null=True, max_length=255)
     encrypted = BooleanField(default=False)
 

@@ -16,4 +16,5 @@ MAIL_USE_SSL = False
 MAIL_DEFAULT_SENDER = 'marketing@ainia.es'
 MAIL_DESTINATARIO_PRUEBAS = 'fjllopis@ainia.es'
 
+UPLOAD_FOLDER = 'uploads'
 FILE_FORMATS = ['zip', '7z', 'tgz', 'gz', 'bz', 'rar']
