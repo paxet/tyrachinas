@@ -1,0 +1,5 @@
+peewee==2.8.0
+psycopg2==2.6.1
+Flask==0.10.1
+Flask-WTF==0.12
+Flask-Mail==0.9.1
