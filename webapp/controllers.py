@@ -1,6 +1,8 @@
 import os, uuid
+from io import StringIO
 from flask import Blueprint, render_template, redirect, url_for, flash, Markup, current_app, send_file, send_from_directory
 from werkzeug.utils import secure_filename
+from beefish import encrypt, decrypt
 from webapp import mail
 from webapp.forms import FormResource
 from webapp.models import Resource
@@ -32,6 +34,7 @@ def send_notification(resource, url_download):
     mail.send_mail(subject_owner,
                    body_owner.format(url_download=url_download),
                    email_owner)
+    return True
 
 
 @listener.route("/", methods=['GET', 'POST'])
@@ -45,15 +48,23 @@ def resources():
             if not os.path.exists(folder):
                 os.makedirs(folder)
             file_path = os.path.join(folder, local_filename)
-            #TODO Encrypt file
-            form.attachment.data.save(file_path)
+
+            # form.attachment.data.save(file_path)
+            # Encrypt file
+            key = 'secret p@ssword'
+            with open(file_path, 'wb') as out_fh:
+                encrypt(form.attachment.data.stream, out_fh, key)
+
             res = Resource.create(filename=remote_filename,
                             description=form.description.data,
                             path=file_path,
                             mimetype=form.attachment.data.mimetype,
                             email_owner=form.email_owner.data,
                             email_receiver=form.email_receiver.data)
-            url_download = url_for('root.download', file_id=res.id)
+            url_download = url_for('root.download',
+                                   file_id=res.id,
+                                   key=key,
+                                   _external=True)
             send_notification(res, url_download)
             flash(Markup('Resource added: <a href="{}">Download</a>'.format(url_download)))
             form = FormResource()
@@ -67,9 +78,19 @@ def resources():
 
 @listener.route("/download/<int:file_id>", methods=['GET'])
 def download(file_id):
-    #TODO Decrypt file
-    res = Resource.get(Resource.id == file_id)
-    return send_file(filename_or_fp=res.path,
-                     mimetype=res.mimetype,
-                     as_attachment=True,
-                     attachment_filename=res.filename)
+    key = request.args.get('key', '')
+    try:
+        res = Resource.get(Resource.id == file_id)
+    except Resource.DoesNotExist:
+        abort(404)
+    else:
+        to_send = res.path
+        if res.encrypted:
+            to_send = StringIO.StringIO()
+            with open(res.path) as fh:
+                decrypt(fh, to_send, key)
+            to_send.seek(0)
+        return send_file(filename_or_fp=to_send,
+                         mimetype=res.mimetype,
+                         as_attachment=True,
+                         attachment_filename=res.filename)

@@ -5,6 +5,7 @@ __author__ = 'paxet'
 
 APP_NAME = 'tyrachinas'
 
+# SERVER_NAME = 'localhost'
 SECRET_KEY = b64encode(os.urandom(64)).decode('utf-8')[:30]
 WTF_CSRF_KEY = b64encode(os.urandom(64)).decode('utf-8')[:30]
 WTF_CSRF_SECRET_KEY = b64encode(os.urandom(64)).decode('utf-8')[:30]
