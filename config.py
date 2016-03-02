@@ -13,7 +13,7 @@ MAIL_SERVER = 'localhost'
 MAIL_PORT = '25'
 MAIL_USE_TLS = False
 MAIL_USE_SSL = False
-MAIL_DEFAULT_SENDER = 'info@tyrachinas.io'
+MAIL_DEFAULT_SENDER = 'info@{}.io'.format(APP_NAME)
 
 UPLOAD_FOLDER = 'uploads'
 FILE_FORMATS = ['zip', '7z', 'tgz', 'gz', 'bz', 'rar']

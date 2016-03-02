@@ -3,6 +3,7 @@ import argparse
 import webapp
 from webapp import app, db
 from webapp.models import Resource
+import config
 
 __author__ = 'paxet'
 
@@ -19,7 +20,7 @@ def get_app():
 
 
 def class_for_name(module_name, class_name):
-    """http://stackoverflow.com/a/13808375"""
+    """Credit goes to m.kocikowski --> http://stackoverflow.com/a/13808375"""
     # load the module, will raise ImportError if module cannot be loaded
     m = importlib.import_module(module_name)
     # get the class, will raise AttributeError if class cannot be found
@@ -73,7 +74,7 @@ def interpret_args(args):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='tyrachinas web project: simple share and host web app')
+    parser = argparse.ArgumentParser(description='{appname} web project: simple share and host web app'.format(appname=config.APP_NAME))
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-c', '--create',
                        help='Create tables in Database',
@@ -87,6 +88,6 @@ if __name__ == '__main__':
                        help='Launch web app with the Flask integrated server',
                        action='store_true',)
     parser.add_argument('--version',
-                        action='version', version='%(prog)s for tyrachinas {}'.format(webapp.__version__))
+                        action='version', version='%(prog)s for {appname} {version}'.format(appname=config.APP_NAME, version=webapp.__version__))
 
     interpret_args(parser.parse_args())

@@ -8,7 +8,7 @@ from webapp.controllers import listener
 
 __author__ = 'paxet'
 __version__ = '0.1.0.dev1'
-__description__ = 'tyrachinas'
+__description__ = 'Simple web app to host and share files'
 
 if os.name == 'nt':
     locale.setlocale(locale.LC_ALL, 'Spanish')  # Windows
@@ -34,9 +34,8 @@ app.register_blueprint(listener)
 
 # Jinja Templates Filters
 @app.template_filter()
-def floathumanreadable(numero: float) -> str:
-    result = locale.format("%.2f", numero, True, True)
-    return result
+def floathumanreadable(number: float):
+    return locale.format("%.2f", number, True, True)
 
 
 @app.errorhandler(401)
@@ -54,12 +53,14 @@ def forbidden_404(exception):
     return render_template('errors/404.html', exception=exception), 404
 
 
+# Open connection on request
 @app.before_request
 def before_request():
     g.db = database
     g.db.connect()
 
 
+# Closing connection after request
 @app.teardown_request
 def teardown_request(exc):
     if not g.db.is_closed():
