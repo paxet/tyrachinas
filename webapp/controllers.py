@@ -61,7 +61,8 @@ def resources():
             flash(Markup('Can\'t do it without attachment'))
     return render_template('index.html',
                            form=form,
-                           formats=htmlinput_accepted_formats())
+                           formats=htmlinput_accepted_formats(),
+                           appname=current_app.config['APP_NAME'])
 
 
 @listener.route("/download/<int:file_id>", methods=['GET'])
