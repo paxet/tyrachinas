@@ -1,6 +1,7 @@
 import os, uuid
 from flask import Blueprint, render_template, redirect, url_for, flash, Markup, current_app, send_file, send_from_directory
 from werkzeug.utils import secure_filename
+from webapp import mail
 from webapp.forms import FormResource
 from webapp.models import Resource
 
@@ -16,6 +17,22 @@ def htmlinput_accepted_formats():
             strfileformats += ', '
         strfileformats += '.' + fmt
     return strfileformats
+
+
+def send_notification(resource, url_download):
+    subject_owner = current_app.config['MAIL_NOTIFICATION_OWNER_SUBJECT']
+    subject_receiver = current_app.config['MAIL_NOTIFICATION_RECEIVER_SUBJECT']
+    body_owner = current_app.config['MAIL_NOTIFICATION_OWNER_BODY']
+    body_receiver = current_app.config['MAIL_NOTIFICATION_RECEIVER_BODY']
+    email_owner = resource.email_owner.split(";")
+    email_recipients = resource.email_receiver.split(";")
+    mail.send_mail(subject_receiver,
+                   body_receiver.format(url_download=url_download),
+                   email_recipients)
+    mail.send_mail(subject_owner,
+                   body_owner.format(url_download=url_download),
+                   email_owner)
+
 
 @listener.route("/", methods=['GET', 'POST'])
 def resources():
@@ -36,9 +53,9 @@ def resources():
                             mimetype=form.attachment.data.mimetype,
                             email_owner=form.email_owner.data,
                             email_receiver=form.email_receiver.data)
-            # TODO Send email to owner and receiver
-            download_url = url_for('root.download', file_id=res.id)
-            flash(Markup('Resource added: <a href="{}">Download</a>'.format(download_url)))
+            url_download = url_for('root.download', file_id=res.id)
+            send_notification(res, url_download)
+            flash(Markup('Resource added: <a href="{}">Download</a>'.format(url_download)))
             form = FormResource()
         else:
             flash(Markup('Can\'t do it without attachment'))
