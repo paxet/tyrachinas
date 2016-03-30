@@ -77,7 +77,7 @@ def resources():
             # Notify user
             url_download = url_for('root.download',
                                    file_id=res.id,
-                                   key=password,
+                                   password=password,
                                    _external=True)
             send_notification(res, url_download)
             msg = 'Resource added: <a href="{}">Download</a>'
@@ -93,7 +93,7 @@ def resources():
 
 @listener.route("/download/<int:file_id>", methods=['GET'])
 def download(file_id):
-    password = request.args.get('key', '')
+    password = request.args.get('password', '')
     key = sha256key(password)
     print('La key: {}'.format(key))
     try:
