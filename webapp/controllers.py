@@ -1,13 +1,15 @@
 import os
 import uuid
-from io import StringIO
+from io import BytesIO
+import random
+import string
 from flask import Blueprint, render_template, url_for, flash, \
-  Markup, current_app, send_file, request, abort
+    Markup, current_app, send_file, request, abort
 from werkzeug.utils import secure_filename
-from beefish import encrypt, decrypt
 from webapp import mail
 from webapp.forms import FormResource
 from webapp.models import Resource
+from webapp.cipher import encrypt_stream, decrypt_stream, sha256key
 
 __author__ = 'paxet'
 
@@ -39,6 +41,12 @@ def send_notification(resource, url_download):
     return True
 
 
+def generate_password(length=32):
+    myrg = random.SystemRandom()
+    alphabet = string.ascii_letters + string.digits  # + string.punctuation
+    return ''.join(myrg.choice(alphabet) for _ in range(length))
+
+
 @listener.route("/", methods=['GET', 'POST'])
 def resources():
     form = FormResource()
@@ -51,26 +59,29 @@ def resources():
             if not os.path.exists(folder):
                 os.makedirs(folder)
             file_path = os.path.join(folder, local_filename)
-
-            # form.attachment.data.save(file_path)
+            in_fh = BytesIO()
+            form.attachment.data.save(in_fh)
             # Encrypt file
-            key = 'secret p@ssword'
+            password = generate_password()
+            key = sha256key(password)
             with open(file_path, 'wb') as out_fh:
-                encrypt(form.attachment.data.stream, out_fh, key)
-
+                encrypt_stream(key, in_fh, out_fh)
+            # Save to database
             res = Resource.create(filename=remote_filename,
                                   description=form.description.data,
                                   path=file_path,
                                   mimetype=form.attachment.data.mimetype,
                                   email_owner=form.email_owner.data,
-                                  email_receiver=form.email_receiver.data)
+                                  email_receiver=form.email_receiver.data,
+                                  encrypted=True)
+            # Notify user
             url_download = url_for('root.download',
                                    file_id=res.id,
-                                   key=key,
+                                   key=password,
                                    _external=True)
             send_notification(res, url_download)
-            message = 'Resource added: <a href="{}">Download</a>'
-            flash(Markup(message.format(url_download)))
+            msg = 'Resource added: <a href="{}">Download</a>'
+            flash(Markup(msg.format(url_download)))
             form = FormResource()
         else:
             flash(Markup('Can\'t do it without attachment'))
@@ -82,18 +93,22 @@ def resources():
 
 @listener.route("/download/<int:file_id>", methods=['GET'])
 def download(file_id):
-    key = request.args.get('key', '')
+    password = request.args.get('key', '')
+    key = sha256key(password)
+    print('La key: {}'.format(key))
     try:
         res = Resource.get(Resource.id == file_id)
     except Resource.DoesNotExist:
         abort(404)
     else:
-        to_send = res.path
         if res.encrypted:
-            to_send = StringIO.StringIO()
-            with open(res.path) as fh:
-                decrypt(fh, to_send, key)
+            to_send = BytesIO()
+            with open(res.path, 'rb') as in_fh:
+                # to_send.write(decrypt_stream(fh, key))
+                decrypt_stream(key, in_fh, to_send)
             to_send.seek(0)
+        else:
+            to_send = res.path
         return send_file(filename_or_fp=to_send,
                          mimetype=res.mimetype,
                          as_attachment=True,
