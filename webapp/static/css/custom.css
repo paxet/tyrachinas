@@ -47,6 +47,11 @@
 .flashes .error {
   color: red;
 }
+
+ul.error {
+  color: red;
+}
+
 .main{
     background-position: center center;
     background-size: cover;
